@@ -1,0 +1,1 @@
+app/ bin/ config/ config.ru db/ lib/ public/ Rakefile Gemfile Gemfile.lock vendor/ .bundle/ /var/www/rails-ansible-presentation

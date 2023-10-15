@@ -1,0 +1,61 @@
+---
+- name: Install nginx
+  apt:
+    pkg: nginx
+    state: latest
+    update_cache: true
+    force: yes
+  register: nginx_installed
+  notify:
+    - Start Nginx
+
+- name: Verify if file exists
+  stat:
+    path: "{{ letsencrypt_dir }}/live/{{ domain }}/fullchain.pem;"
+  register: file_status
+
+- name: remove default
+  when: nginx_installed is success
+  file:
+    path: /etc/nginx/sites-enabled/default
+    state: absent
+
+- name: Push site config without ssl
+  template:
+    src: ansible-presentation-without-ssl.j2
+    dest: /etc/nginx/sites-available/rails_ansible_presentation
+  register: site_available
+  when: not file_status.stat.exists and nginx_installed is success
+
+- name: create letsencrypt
+  become: yes
+  vars:
+    service_host: "{{ domain }}"
+    service_admin_email: "{{ certbot_service_admin_email }}"
+    service_name: "{{ certbot_service_name }}"
+    letsencrypt_ssl_dir: "{{ certbot_ssl_dir }}"
+  block:
+    - name: Create certificate
+      shell: certbot certonly --nginx -n --email {{ service_admin_email }} --agree-tos -d {{ service_host }}
+    - name: Restart nginx
+      systemd:
+        state: restarted
+        daemon_reload: yes
+        name: nginx
+  when: not file_status.stat.exists
+
+- name: Push site config
+  template:
+    src: ansible-presentation.j2
+    dest: /etc/nginx/sites-available/rails_ansible_presentation
+  register: site_available
+  when: file_status.stat.exists or nginx_installed is success
+
+- name: make site enabled
+  register: site_enabled
+  file:
+    src: /etc/nginx/sites-available/rails_ansible_presentation
+    dest: /etc/nginx/sites-enabled/rails_ansible_presentation
+    state: link
+  notify:
+    - Restart Nginx

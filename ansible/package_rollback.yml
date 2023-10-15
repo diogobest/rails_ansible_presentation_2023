@@ -1,0 +1,15 @@
+---
+- hosts: web
+  become: yes
+  tasks:
+    - name: Install package
+      apt:
+        deb: /tmp/packages/rails-ansible-presentation_{{ version }}_amd64.deb
+        force: yes
+
+    - name: Restart web app
+      systemd:
+        state: restarted
+        daemon_reload: yes
+        name: rails-ansible-presentation
+

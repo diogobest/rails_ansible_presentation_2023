@@ -1,0 +1,11 @@
+[web]
+ec2-100-25-215-32.compute-1.amazonaws.com
+
+[all:vars]
+ansible_ssh_user=ubuntu
+ansible_ssh_private_key_file=~/.ssh/key.pem
+
+[web:vars]
+ansible_python_interpreter=/usr/bin/python3
+
+# vi: set ft=cfg :

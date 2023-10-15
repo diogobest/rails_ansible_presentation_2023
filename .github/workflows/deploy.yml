@@ -1,0 +1,60 @@
+name: Deploy
+on:
+  push:
+    tags: v*-app
+
+env:
+  SECRET_KEY_BASE: ${{ secrets.SECRET_KEY_BASE || github.sha }}
+  RAILS_ENV: staging
+
+jobs:
+  deploy:
+    name: deploy
+    runs-on: ubuntu-22.04
+    env:
+      APP_NAME: rails-ansible-presentation 
+      TZ: America/Sao_Paulo
+      LC_ALL: en_US.UTF-8
+      LANG: en_US.UTF-8
+
+    container:
+      image: ubuntu:22.04
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: FranzDiebold/github-env-vars-action@v2
+
+      - name: Install dependecies
+        run: |
+          apt-get update -qq --fix-missing
+          DEBIAN_FRONTEND=noninteractive apt-get install -y tzdata
+          apt-get install -y locales autotools-dev pkg-config gnupg autoconf openssh-client dh-make make musl-dev software-properties-common ruby ruby-dev python3-distutils python3-apt python3-pip devscripts
+          add-apt-repository --yes --update ppa:ansible/ansible
+          apt-get install -y ansible
+          pip install boto3
+
+      - name: Install ansible galaxies
+        working-directory: ./ansible
+        run: ansible-galaxy install -r requirements.yml
+
+      - name: Configure ssh
+        run: |
+          eval $(ssh-agent -s)
+          mkdir -p ~/.ssh
+          echo -n "${{ secrets.SSH_KEY }}" > ~/.ssh/key.pem
+          echo "${{ secrets.ANSIBLE_PASS }}" > ~/.ansible_pass
+          chmod 700 ~/.ssh
+
+      - name: Build package
+        run: |
+          gem install bundler -v 2.2.33
+          export APP_VERSION=`echo $CI_REF_NAME | sed 's/v\([0-9.]\+\)\(-app\)\?/\1\2/'`
+          DEBEMAIL="Maintainer <maintainer_email@email.com>" dch --distribution unstable --package $APP_NAME --newversion $APP_VERSION "automatic build" --urgency "low"
+          dpkg-buildpackage -d -us -uc
+          mv ../${APP_NAME}_${APP_VERSION}_amd64.deb ansible/roles/common/files/packages/
+
+      - name: Run main playbook
+        working-directory: ./ansible
+        run: |
+          chmod 600 ~/.ssh/key.pem
+          ansible-playbook -i inventories/app/hosts.aws_ec2 --extra-vars "@inventories/app/group_vars/nginx"  --extra-vars "@inventories/app/group_vars/envs"  main.yml -vvvvvv

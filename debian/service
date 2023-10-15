@@ -1,0 +1,24 @@
+[Unit]
+Description=Rails_ansible_presentation web app
+After=network.target
+
+[Service]
+Type=simple
+TimeoutSec=120
+RestartSec=5
+Restart=always
+User=presentation
+Group=presentation
+PermissionsStartOnly=true
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=presentation
+
+EnvironmentFile=/etc/default/rails-ansible-presentation
+WorkingDirectory=/var/www/rails-ansible-presentation
+ExecStart=/usr/local/bin/bundle exec puma -C config/puma.rb
+
+[Install]
+WantedBy=multi-user.target
+
+# vi: set ft=systemd :

@@ -1,0 +1,68 @@
+- name: verify if ruby is installed
+  block:
+    - name: install apt
+      apt:
+        name: apt
+        state: present
+        update_cache: yes
+    - name: Get package facts
+      package_facts:
+        manager: apt
+    - set_fact:
+        ruby30_installed: True
+      when: '"libruby3.0" in ansible_facts.packages'
+    - set_fact:
+        ruby30_installed: False
+      when: '"libruby3.0" not in ansible_facts.packages'
+
+- name: Install Ruby 3.0
+  apt:
+    name: libruby
+    state: latest
+    update_cache: true
+    force: yes
+  when: not ruby30_installed
+
+- name: install dependencies
+  apt:
+    pkg: "{{ packages }}"
+    state: present
+    install_recommends: no
+    update_cache: yes
+  vars:
+    packages:
+      - git
+      - rsync
+      - vim
+      - xz-utils
+      - zip
+      - nodejs
+      - redis
+      - certbot
+      - python3-certbot-nginx
+
+- name: install bundler
+  gem:
+    name: bundler
+    version: 2.4.20
+    state: present
+
+- name: sync packages
+  synchronize:
+    src: packages
+    recursive: yes
+    delete: yes
+    dest: /tmp/
+
+- name: Get packages list
+  find:
+    paths: /tmp/packages
+  register: found_packages
+
+- name: Get latest package
+  set_fact:
+    latest_file: "{{ found_packages.files | sort(attribute='mtime',reverse=true) | first }}"
+
+- name: Install package
+  apt:
+    deb: "{{ latest_file.path }}"

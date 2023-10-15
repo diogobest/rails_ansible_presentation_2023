@@ -1,0 +1,5 @@
+- name: Push default env vars
+  template:
+    src: default.j2
+    dest: /etc/default/rails-ansible-presentation
+    mode: 0644

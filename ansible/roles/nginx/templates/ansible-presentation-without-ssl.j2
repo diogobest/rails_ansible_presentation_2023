@@ -1,0 +1,46 @@
+upstream rails-presentation-webapp {
+  server {{ groups['web'][0] }}:3000;
+}
+
+log_format upstreamlog '[$time_local] $remote_addr - $server_name to: $upstream_addr "$request" $status "$http_referer" "$http_user_agent" urt: $upstream_response_time msec: $msec rt: $request_time';
+
+server {
+  listen 80 default_server;
+  server_name {{ domain }} {{ alternative_domains }};
+  return 301 https://{{ domain }}$request_uri;
+}
+
+server {
+  listen 443 http2 default_server;
+  server_name {{ domain }};
+
+  access_log   /var/log/nginx/{{ app_name }}.log upstreamlog;
+  error_log    /var/log/nginx/{{ app_name }}_error.log error;
+
+  location / {
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Request-ID $request_id;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header Host $http_host;
+    proxy_set_header X-Forwarded-Proto https;
+    proxy_redirect off;
+    proxy_pass http://rails-presentation-webapp;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection "upgrade";
+
+    # asset delivery using NGINX
+    location ~* ^.+\.(css|cur|gif|gz|ico|jpg|jpeg|js|png|svg|woff|woff2)$ {
+      root {{ assets_path }};
+      etag off;
+      expires max;
+      add_header Cache-Control public;
+    }
+
+    location ~ \.(aspx|asp|php|jsp|cgi|exp|esp|cfg)$ {
+      try_files $uri =410;
+      break;
+    }
+  }
+}
+
+# vim: ft=nginx

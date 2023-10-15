@@ -1,0 +1,38 @@
+---
+- hosts: web
+  name: Deploy web application
+  become: yes
+  tasks:
+    - block:
+        - name: install webserver package
+          include_role:
+            name: common
+
+    - block:
+        - name: push envs
+          include_role:
+            name: web
+
+- hosts: web
+  name: Prepare, install and configure web application
+  become: yes
+  roles:
+    - common
+    - web
+
+- hosts: web
+  name: Configure nginx
+  become: yes
+  roles:
+    - nginx
+
+- hosts: web
+  name: Restart web app
+  become: yes
+  tasks:
+    - name: Restart Web service
+      systemd:
+        state: restarted
+        daemon_reload: yes
+        name: rails-ansible-presentation
+

@@ -1,0 +1,11 @@
+Source: rails-ansible-presentation
+Section: web
+Priority: optional
+Maintainer: Maintainer<maintainer_email@email.com>
+Build-Depends: debhelper (>= 12)
+Homepage: <YOUR HOSTNAME HERE>
+
+Package: rails-ansible-presentation
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: rails_ansible_presentation
