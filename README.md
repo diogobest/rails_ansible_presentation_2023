@@ -13,27 +13,7 @@ docker-compose run --rm --service-ports web bash
 
 rails s -p 3015 -b 0.0.0.0
 
+#### Documentação
 
-#### Link com a apresentação:
-
-https://docs.google.com/presentation/d/12hNHkNSkZuUBAQllnQJ4R3IKOfdVeLjQtL4ZizWs6lU/edit?usp=sharing
-
-#### Criando um novo ec2
-
-ansible-playbook -i inventories/app/hosts.ec2 --extra-vars "@inventories/app/group_vars/aws"   playbooks/create_ec2.yml -vvvvvv
-
-#### Editando envs
-
-ansible-vault edit --vault-password-file ~/.ansible_pass inventories/app/group_vars/aws
-
-ansible-vault edit --vault-password-file ~/.ansible_pass inventories/app/group_vars/envs
-
-ansible-vault edit --vault-password-file ~/.ansible_pass inventories/app/group_vars/nginx
-
-
-#### Criando uma nova máquina ec2
-
-ansible-playbook -i inventories/app/group_vars/hosts.ec2 --extra-vars "@inventories/app/group_vars/aws"  playbooks/create_ec2.yml -vvvvvv
-
-#### variaveis aws
-
+Para mais informações de como melhor utilizar esse repositório, leia os arquivos
+na pasta docs.
