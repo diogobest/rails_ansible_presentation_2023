@@ -52,7 +52,6 @@
   when: file_status.stat.exists or nginx_installed is success
 
 - name: make site enabled
-  register: site_enabled
   file:
     src: /etc/nginx/sites-available/rails_ansible_presentation
     dest: /etc/nginx/sites-enabled/rails_ansible_presentation

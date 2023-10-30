@@ -9,4 +9,4 @@ services:
       - .:/var/www/rails-ansible-presentation
     env_file:
       .env.docker
-    command: /bin/sh -c "rm -f /var/www/core/tmp/pids/server.pid && rails s -b 0.0.0.0"
+    command: /bin/sh -c "rails s -b 0.0.0.0"
